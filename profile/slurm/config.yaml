@@ -1,0 +1,139 @@
+executor: slurm
+jobs: 45
+
+set-resources:
+  dragen_index:
+    runtime: 240
+    slurm_extra: "--constraint=cascadelake --cpu-freq=High-High:Performance"
+    slurm_partition: 4hours
+    threads: 52
+    cpus_per_task: 52
+    mem_mb: 500000
+  unmapped_bam:
+    runtime: 720
+    slurm_extra: "--constraint=cascadelake --cpu-freq=High-High:Performance"
+    slurm_partition: 12hours
+    threads: 26
+    cpus_per_task: 26
+    mem_mb: 250000
+  collect_quality_yield_metrics:
+    runtime: 240
+    slurm_extra: "--cpu-freq=High-High:Performance"
+    slurm_partition: 4hours
+    threads: 4
+    cpus_per_task: 4
+    mem_mb: 32000
+  unmapped_bam_to_aligned:
+    runtime: 7200
+    slurm_extra: "--constraint=cascadelake --cpu-freq=High-High:Performance"
+    slurm_partition: 5days
+    threads: 52
+    cpus_per_task: 52
+    mem_mb: 500000
+  collect_unsorted_readgroup_bam_quality_metrics:
+    runtime: 240
+    slurm_extra: "--cpu-freq=High-High:Performance"
+    slurm_partition: 4hours
+    threads: 4
+    cpus_per_task: 4
+    mem_mb: 32000
+  mark_duplicates:
+    runtime: 240
+    slurm_extra: "--cpu-freq=High-High:Performance"
+    slurm_partition: 4hours
+    threads: 26
+    cpus_per_task: 26
+    mem_mb: 250000
+  sort_bam:
+    runtime: 240
+    slurm_extra: "--constraint=cascadelake --cpu-freq=High-High:Performance"
+    slurm_partition: 4hours
+    threads: 26
+    cpus_per_task: 26
+    mem_mb: 250000 # Memory (in GB) must be AT LEAST double the number of threads
+  cross_check_fingerprints:
+    runtime: 240
+    slurm_extra: "--constraint=cascadelake --cpu-freq=High-High:Performance"
+    slurm_partition: 4hours
+    threads: 13
+    cpus_per_task: 13
+    mem_mb: 125000
+  base_recalibration:
+    # limit: 1
+    runtime: 240
+    slurm_extra: "--cpu-freq=High-High:Performance"
+    slurm_partition: 4hours
+    threads: 6
+    cpus_per_task: 6
+    mem_mb: 62500
+  check_contamination:
+    runtime: 240
+    slurm_extra: "--constraint=cascadelake --cpu-freq=High-High:Performance"
+    slurm_partition: 4hours
+    threads: 13
+    cpus_per_task: 13
+    mem_mb: 125000
+  gather_bqsr_reports:
+    runtime: 240
+    slurm_extra: "--cpu-freq=High-High:Performance"
+    slurm_partition: 4hours
+    threads: 13
+    cpus_per_task: 13
+    mem_mb: 125000
+  apply_bqsr:
+    runtime: 240
+    slurm_extra: "--cpu-freq=High-High:Performance"
+    slurm_partition: 4hours
+    threads: 13
+    cpus_per_task: 13
+    mem_mb: 125000
+  gather_recalibrated_bams:
+    runtime: 240
+    slurm_extra: "--cpu-freq=High-High:Performance"
+    slurm_partition: 4hours
+    threads: 13
+    cpus_per_task: 13
+    mem_mb: 125000
+  collect_readgroup_bam_quality_metrics:
+    runtime: 240
+    slurm_extra: "--cpu-freq=High-High:Performance"
+    slurm_partition: 4hours
+    threads: 13
+    cpus_per_task: 13
+    mem_mb: 125000
+  collect_aggregation_metrics:
+    runtime: 720
+    slurm_extra: "--constraint=cascadelake --cpu-freq=High-High:Performance"
+    slurm_partition: 12hours
+    threads: 13
+    cpus_per_task: 13
+    mem_mb: 125000
+  calculate_readgroup_checksum:
+    runtime: 240
+    slurm_extra: "--constraint=cascadelake --cpu-freq=High-High:Performance"
+    slurm_partition: 4hours
+    threads: 13
+    cpus_per_task: 13
+    mem_mb: 125000
+  convert_to_cram:
+    runtime: 240
+    slurm_extra: "--constraint=cascadelake --cpu-freq=High-High:Performance"
+    slurm_partition: 4hours
+    threads: 26
+    cpus_per_task: 26
+    mem_mb: 250000
+
+# resources:
+#   limit: 10
+
+use-apptainer: True
+use-conda: True
+apptainer-prefix: workflow/rules/envs
+conda-prefix: workflow/rules/envs
+apptainer-args: -B /zata,/data
+
+# retries: 1
+# max-jobs-per-timespan: 1/2s
+rerun-incomplete: True
+printshellcmds: True
+keep-incomplete: True

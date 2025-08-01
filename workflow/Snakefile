@@ -1,0 +1,183 @@
+import os
+import copy
+import tempfile
+import shutil
+import uuid
+from box import Box
+import polars as pl
+import subprocess
+import pickle
+from pathlib import Path
+
+configfile: "config/config.yml"
+config = Box(config)
+workdir: config.work_dir
+
+##################
+### common.smk ###
+##################
+
+metadata = pl.read_csv(config.input_files.metadata, separator="\t")
+
+SAMPLES = metadata["Sample"].to_list()
+read1 = metadata["R1"].to_list()    
+read2 = metadata["R2"].to_list()
+
+READ_LOOKUP = dict(zip(SAMPLES, zip(read1, read2)))
+
+### ensure picard tmp dir exists ###
+
+Path(config.get("picard_tmp_dir", ".picard")).mkdir(parents=True, exist_ok=True)
+
+### index reference fasta file ###
+# TODO: Make this more robust (i.e. ext might be .fasta.gz, .fa, etc.)
+# Better yet, might be better to just make a copy and then use a KNOWN file
+# name throughout the program, instead of predicting what the user will provide.
+
+def create_fasta_derivatives(reference_fasta):
+    fasta_index = Path(reference_fasta + ".fai")
+    fasta_dict = Path(reference_fasta.replace(".fasta", ".dict"))
+    if not fasta_index.exists():
+        subprocess.check_call(f"samtools faidx {reference_fasta}", shell=True)
+    if not fasta_dict.exists():
+        subprocess.check_call(f"samtools dict {reference_fasta} -o {reference_fasta.rstrip('.fasta')}.dict", shell=True)
+    return fasta_index, fasta_dict
+
+fasta_index, fasta_dict = create_fasta_derivatives(config.input_files.reference_fasta)
+assert fasta_index.exists() and fasta_dict.exists()
+config.input_files.reference_fasta_index = str(fasta_index)
+config.input_files.reference_fasta_dict = str(fasta_dict)
+
+### create sequencing grouping tsv for bsqr ###
+
+def create_sequencing_group_tsv(reference_fasta_dict, sequence_grouping, sequence_grouping_with_unmapped):
+    with open(reference_fasta_dict, "r") as ref_dict_file:
+        sequence_tuple_list = []
+        longest_sequence = 0
+        for line in ref_dict_file:
+            if line.startswith("@SQ"):
+                line_split = line.split("\t") # (Sequence_Name, Sequence_Length)
+                sequence_tuple_list.append((line_split[1].split("SN:")[1], int(line_split[2].split("LN:")[1])))
+        longest_sequence = sorted(sequence_tuple_list, key=lambda x: x[1], reverse=True)[0][1]
+
+    # We are adding this to the intervals because hg38 has contigs named with embedded colons and a bug in GATK strips off
+    # the last element after a :, so we add this as a sacrificial element.
+    hg38_protection_tag = ":1+"
+
+    # initialize the tsv string with the first sequence
+    tsv_string = sequence_tuple_list[0][0] + hg38_protection_tag
+    temp_size = sequence_tuple_list[0][1]
+    for sequence_tuple in sequence_tuple_list[1:]:
+        if temp_size + sequence_tuple[1] <= longest_sequence:
+            temp_size += sequence_tuple[1]
+            tsv_string += "\t" + sequence_tuple[0] + hg38_protection_tag
+        else:
+            tsv_string += "\n" + sequence_tuple[0] + hg38_protection_tag
+            temp_size = sequence_tuple[1]
+
+    # add the unmapped sequences as a separate line to ensure that they are recalibrated as well
+    with open(sequence_grouping, "w") as tsv_file:
+        tsv_file.write(tsv_string)
+        tsv_file.close()
+
+    tsv_string += '\n' + "unmapped"
+
+    with open(sequence_grouping_with_unmapped, "w") as tsv_file_with_unmapped:
+        tsv_file_with_unmapped.write(tsv_string)
+        tsv_file_with_unmapped.close()
+
+path = Path(f"{config.results_dir}/create_sequencing_group_tsv")
+path.mkdir(parents=True, exist_ok=True)
+sequence_grouping = path / "sequence_grouping.txt"
+sequence_grouping_with_unmapped = path / "sequence_grouping_with_unmapped.txt"
+
+create_sequencing_group_tsv(
+    config.input_files.reference_fasta_dict,
+    sequence_grouping,
+    sequence_grouping_with_unmapped
+)
+
+### add sequence groups to configfile ###
+
+SEQUENCE_GROUPS_PATH = sequence_grouping
+with open(SEQUENCE_GROUPS_PATH, "r") as tsv_file:
+    NUM_SEQUENCE_GROUPS = sum(1 for line in tsv_file)
+
+print("DEBUG")
+print(f"Sequence groups: {SEQUENCE_GROUPS_PATH}")
+print(f"Number of sequence groups: {NUM_SEQUENCE_GROUPS}")
+
+#########################
+### end of common.smk ###
+#########################
+
+include: "rules/dragen_index.smk"
+include: "rules/unmapped_bam.smk"
+include: "rules/collect_quality_yield_metrics.smk"
+include: "rules/unmapped_bam_to_aligned.smk"
+include: "rules/collect_unsorted_readgroup_bam_quality_metrics.smk"
+include: "rules/mark_duplicates.smk"
+include: "rules/sort_bam.smk"
+include: "rules/cross_check_fingerprints.smk"
+include: "rules/check_contamination.smk"
+include: "rules/base_recalibration.smk"
+include: "rules/gather_bqsr_reports.smk"
+include: "rules/apply_bqsr.smk"
+include: "rules/gather_recalibrated_bams.smk"
+include: "rules/collect_readgroup_bam_quality_metrics.smk"
+include: "rules/collect_aggregation_metrics.smk"
+# include: "rules/calculate_readgroup_checksum.smk"
+# include: "rules/convert_to_cram.smk"
+
+rule all:
+    input:
+        os.path.join(config.results_dir, "dragen_reference/.continue"),
+        expand(f"{config.results_dir}/unmapped_bam/{{sample}}.bam", sample=SAMPLES),
+        expand(f"{config.results_dir}/collect_quality_yield_metrics/{{sample}}.metrics", sample=SAMPLES),
+        expand(f"{config.results_dir}/unmapped_bam_to_aligned/{{sample}}.bam", sample=SAMPLES),
+        expand(
+            [
+                f"{config.results_dir}/collect_unsorted_readgroup_bam_quality_metrics/{{sample}}.insert_size_metrics",
+                f"{config.results_dir}/collect_unsorted_readgroup_bam_quality_metrics/{{sample}}.insert_size_histogram.pdf",
+            ],
+            sample=SAMPLES
+        ),
+        expand(f"{config.results_dir}/mark_duplicates/{{sample}}.bam", sample=SAMPLES),
+        expand(f"{config.results_dir}/sort_bam/{{sample}}.bam", sample=SAMPLES),
+        expand(f"{config.results_dir}/cross_check_fingerprints/{{sample}}.metrics", sample=SAMPLES),
+        expand(f"{config.results_dir}/check_contamination/{{sample}}.preBqsr.selfSM", sample=SAMPLES),
+        expand(
+            f"{config.results_dir}/base_recalibrator/{{sample}}/{{group}}.recal_data.csv",
+            sample=SAMPLES, group=list(range(NUM_SEQUENCE_GROUPS))
+        ),
+        expand(f"{config.results_dir}/gather_bqsr_reports/{{sample}}.recal_data.csv", sample=SAMPLES),
+        expand(
+            f"{config.results_dir}/apply_bqsr/{{sample}}/{{group}}.bam",
+            sample=SAMPLES, group=list(range(NUM_SEQUENCE_GROUPS))
+        ),
+        expand(f"{config.results_dir}/gather_recalibrated_bams/{{sample}}.bam", sample=SAMPLES),
+        expand(f"{config.results_dir}/collect_readgroup_bam_quality_metrics/{{sample}}.continue", sample=SAMPLES),
+        expand(f"{config.results_dir}/collect_aggregation_metrics/{{sample}}.continue", sample=SAMPLES),
+        # expand(f"{config.results_dir}/calculate_readgroup_checksum/{{sample}}.md5", sample=SAMPLES),
+        # expand(f"{config.results_dir/convert_to_cram/{{sample}}.cram", sample=SAMPLES),
+        # expand(
+        #     [
+        #         f"{config.results_dir/check_prevalidation/{{sample}}.duplication_value.txt", 
+        #         f"{config.results_dir/check_prevalidation/{{sample}}.chimerism_value.txt"
+        #     ],
+        #     sample=SAMPLES
+        # ),
+        # expand(f"{config.results_dir}/validate_sam_file/{{sample}}.validation_report", sample=SAMPLES),
+        # expand(f"{config.results_dir}/collect_wgs_metrics/{{sample}}.wgs_metrics", sample=SAMPLES),
+        # expand(f"{config.results_dir/collect_raw_wgs_metrics/{{sample}}.raw_wgs_metrics", sample=SAMPLES),
+        # expand(f"{config.results_dir}/calibrate_dragen_str_model/{{sample}}.dragstr", sample=SAMPLES),
+        # expand(
+        #     f"{config.results_dir}/scatter_interval_list/temp_{{scatter:04d}}_of_{config.scatter_interval_list.scatter_count}/{{scatter}}scattered.interval_list ",
+        #     scatter = list(range(1, config.scatter_interval_list.scatter_count + 1))
+        # ),
+        # expand(
+        #     f"{config.results_dir}/haplotype_caller/{{sample}}/{{scatter}}.vcf",
+        #     sample=config.samples,
+        #     scatter=range(1, config.scatter_interval_list.scatter_count + 1)
+        # )
+         
