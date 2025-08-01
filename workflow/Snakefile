@@ -176,8 +176,32 @@ rule all:
         #     scatter = list(range(1, config.scatter_interval_list.scatter_count + 1))
         # ),
         # expand(
-        #     f"{config.results_dir}/haplotype_caller/{{sample}}/{{scatter}}.vcf",
+        #     [
+        #         f"{config.results_dir}/haplotype_caller/{{sample}}/{{scatter}}.g.vcf.gz",
+        #         f"{config.results_dir}/haplotype_caller/{{sample}}/{{scatter}}.bamout.bam",
+        #     ],
         #     sample=config.samples,
         #     scatter=range(1, config.scatter_interval_list.scatter_count + 1)
         # )
+        # expand(
+        #     f"{config.results_dir}/dragen_hardfilter_gvcf/{{sample}}/{{scatter}}.hardfiltered.g.vcf.gz",
+        #     sample=SAMPLES,
+        #     scatter=range(1, config.scatter_interval_list.scatter_count + 1)
+        # )
+        # expand(f"{config.results_dir}/merge_gvcfs/{{sample}}.merged.g.vcf.gz", sample=SAMPLES),
+        # expand(
+        #     f"{config.results_dir}/sort_bamout/{{sample}}/{{scatter}}.bam",
+        #     sample=SAMPLES,
+        #     scatter=range(1, config.scatter_interval_list.scatter_count + 1)
+        # ),
+        # expand(f"{config.results_dir}/merge_bamout/{{sample}}.bam", sample=SAMPLES),
+        # expand(f"{config.results_dir}/reblock/{{sample}}.rb.g.vcf.gz", sample=SAMPLES),
+        # expand(f"{config.results_dir}/validate_gvcf/{{sample}}.OK", sample=SAMPLES),
+        # expand(
+        #     [
+        #         f"{config.results_dir}/collect_variant_calling_metrics/{{sample}}.variant_calling_detail_metrics",
+        #         f"{config.results_dir}/collect_variant_calling_metrics/{{sample}}.variant_calling_summary_metrics",
+        #     ],
+        #     sample=SAMPLES
+        # ),
          
