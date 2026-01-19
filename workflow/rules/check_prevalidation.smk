@@ -9,7 +9,6 @@ rule check_prevalidation:
     output:
         duplication_value = f"{config.results_dir}/check_prevalidation/{{sample}}.duplication_value.txt",
         chimerism_value = f"{config.results_dir}/check_prevalidation/{{sample}}.chimerism_value.txt"
-        # skip_mate_validation = f"{config.results_dir}/check_prevalidation/{{sample}}.skip_mate_validation.txt"
     params:
         tmp_dir = config.tmp_dir
     container: config.environments.default
@@ -24,22 +23,24 @@ rule check_prevalidation:
         
         sys.stderr = open(log[0], "w")
 
-        duplication_csv = Path({params.tmp_dir}/{str(uuid.uuid4())}.csv) 
-        chimerism_csv = Path({params.tmp_dir}/{str(uuid.uuid4())}.csv)
+        duplication_csv = Path(f"{params.tmp_dir}/{str(uuid.uuid4())}.csv") 
+        chimerism_csv = Path(f"{params.tmp_dir}/{str(uuid.uuid4())}.csv")
 
-        grep_dup_met = f"grep -A 1 PERCENT_DUPLICATION {input.duplication_metrics} > {{duplication_csv.resolve()}}"
-        grep_align_met = f"grep -A 3 PCT_CHIMERAS {input.agg_alignment_summary_metrics} | grep -v OF_PAIR > {{chimerism_csv.resolve()}}"
+        grep_dup_met = f"grep -A 1 PERCENT_DUPLICATION {input.duplication_metrics} > {duplication_csv.resolve()}"
+        grep_align_met = f"grep -A 3 PCT_CHIMERAS {input.agg_alignment_summary_metrics} | grep -v OF_PAIR > {chimerism_csv.resolve()}"
         subprocess.check_call(grep_dup_met, shell=True)
         subprocess.check_call(grep_align_met, shell=True)
  
-        with open({duplication_value.resolve()}) as dupfile:
+        with duplication_csv.open("r") as dupfile:
             reader = csv.DictReader(dupfile, delimiter='\t')
             for row in reader:
-                with open({output.duplication_value}, "w") as file:
+                with open(output.duplication_value, "w") as file:
                     file.write(row['PERCENT_DUPLICATION'])
                     file.close()
 
-        with open({chimerism_value.resolve()}) as chimfile:
+        with chimerism_csv.open("r") as chimfile:
             reader = csv.DictReader(chimfile, delimiter='\t')
             for row in reader:
-                with open({output.chimerism_value}, "w") as file: file.write(row['PCT_CHIMERAS']) file.close()
+                with open(output.chimerism_value, "w") as file:
+                    file.write(row['PCT_CHIMERAS'])
+                    file.close()

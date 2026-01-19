@@ -1,184 +1,164 @@
 executor: slurm
-jobs: unlimited
+jobs: 50
 
 set-resources:
   dragen_index:
     runtime: 240
-    constraint: cascadelake
-    slurm_extra: "--exclude=z[1024,1062] --cpu-freq=High-High:Performance"
+    slurm_extra: "--constraint=cascadelake --cpu-freq=High-High:Performance"
     slurm_partition: 4hours
     threads: 52
     cpus_per_task: 52
     mem_mb: 500000
   unmapped_bam:
     runtime: 720
-    constraint: cascadelake
-    slurm_extra: "--exclude=z[1024,1062] --cpu-freq=High-High:Performance"
+    slurm_extra: "--constraint=cascadelake --cpu-freq=High-High:Performance"
     slurm_partition: 12hours
     threads: 26
     cpus_per_task: 26
     mem_mb: 250000
   collect_quality_yield_metrics:
     runtime: 240
-    constraint: cascadelake
-    slurm_extra: "--exclude=z[1024,1062] --cpu-freq=High-High:Performance"
+    slurm_extra: "--cpu-freq=High-High:Performance"
     slurm_partition: 4hours
     threads: 4
     cpus_per_task: 4
     mem_mb: 32000
   unmapped_bam_to_aligned:
     runtime: 7200
-    constraint: cascadelake
-    slurm_extra: "--exclude=z[1024,1062] --cpu-freq=High-High:Performance"
+    slurm_extra: "--constraint=cascadelake --cpu-freq=High-High:Performance"
     slurm_partition: 5days
     threads: 52
     cpus_per_task: 52
     mem_mb: 500000
   collect_unsorted_readgroup_bam_quality_metrics:
     runtime: 240
-    constraint: cascadelake
-    slurm_extra: "--exclude=z[1024,1062] --cpu-freq=High-High:Performance"
+    slurm_extra: "--cpu-freq=High-High:Performance"
     slurm_partition: 4hours
     threads: 4
     cpus_per_task: 4
     mem_mb: 32000
   mark_duplicates:
-    runtime: 720
-    constraint: cascadelake
-    slurm_extra: "--exclude=z[1024,1062] --cpu-freq=High-High:Performance"
-    slurm_partition: 12hours
+    runtime: 240
+    slurm_extra: "--cpu-freq=High-High:Performance"
+    slurm_partition: 4hours
     threads: 26
     cpus_per_task: 26
     mem_mb: 250000
   sort_bam:
     runtime: 240
-    constraint: cascadelake
-    slurm_extra: "--exclude=z[1024,1062] --cpu-freq=High-High:Performance"
+    slurm_extra: "--constraint=cascadelake --cpu-freq=High-High:Performance"
     slurm_partition: 4hours
     threads: 26
     cpus_per_task: 26
     mem_mb: 250000 # Memory (in GB) must be AT LEAST double the number of threads
   cross_check_fingerprints:
     runtime: 240
-    constraint: cascadelake
-    slurm_extra: "--exclude=z[1024,1062] --cpu-freq=High-High:Performance"
+    slurm_extra: "--constraint=cascadelake --cpu-freq=High-High:Performance"
     slurm_partition: 4hours
     threads: 13
     cpus_per_task: 13
     mem_mb: 125000
   base_recalibration:
     runtime: 240
-    constraint: cascadelake
-    slurm_extra: "--exclude=z[1024,1062] --cpu-freq=High-High:Performance"
+    slurm_extra: "--cpu-freq=High-High:Performance"
     slurm_partition: 4hours
     threads: 6
     cpus_per_task: 6
     mem_mb: 62500
   check_contamination:
     runtime: 240
-    constraint: cascadelake
-    slurm_extra: "--exclude=z[1024,1062] --cpu-freq=High-High:Performance"
+    slurm_extra: "--constraint=cascadelake --cpu-freq=High-High:Performance"
     slurm_partition: 4hours
     threads: 13
     cpus_per_task: 13
     mem_mb: 125000
   gather_bqsr_reports:
     runtime: 240
-    constraint: cascadelake
-    slurm_extra: "--exclude=z[1024,1062] --cpu-freq=High-High:Performance"
+    slurm_extra: "--cpu-freq=High-High:Performance"
     slurm_partition: 4hours
     threads: 13
     cpus_per_task: 13
     mem_mb: 125000
   apply_bqsr:
     runtime: 240
-    constraint: cascadelake
-    slurm_extra: "--exclude=z[1024,1062] --cpu-freq=High-High:Performance"
+    slurm_extra: "--cpu-freq=High-High:Performance"
     slurm_partition: 4hours
     threads: 13
     cpus_per_task: 13
     mem_mb: 125000
   gather_recalibrated_bams:
     runtime: 240
-    slurm_extra: "--exclude=z[1024,1062] --cpu-freq=High-High:Performance"
+    slurm_extra: "--cpu-freq=High-High:Performance"
     slurm_partition: 4hours
     threads: 13
     cpus_per_task: 13
     mem_mb: 125000
   collect_readgroup_bam_quality_metrics:
     runtime: 240
-    constraint: cascadelake
-    slurm_extra: "--exclude=z[1024,1062] --cpu-freq=High-High:Performance"
+    slurm_extra: "--cpu-freq=High-High:Performance"
     slurm_partition: 4hours
     threads: 13
     cpus_per_task: 13
     mem_mb: 125000
   collect_aggregation_metrics:
     runtime: 720
-    constraint: cascadelake
-    slurm_extra: "--exclude=z[1024,1062] --cpu-freq=High-High:Performance"
+    slurm_extra: "--constraint=cascadelake --cpu-freq=High-High:Performance"
     slurm_partition: 12hours
     threads: 13
     cpus_per_task: 13
     mem_mb: 125000
   calculate_readgroup_checksum:
     runtime: 240
-    constraint: cascadelake
-    slurm_extra: "--exclude=z[1024,1062] --cpu-freq=High-High:Performance"
+    slurm_extra: "--constraint=cascadelake --cpu-freq=High-High:Performance"
     slurm_partition: 4hours
     threads: 13
     cpus_per_task: 13
     mem_mb: 125000
   convert_to_cram:
     runtime: 240
-    constraint: cascadelake
-    slurm_extra: "--exclude=z[1024,1062] --cpu-freq=High-High:Performance"
+    slurm_extra: "--constraint=cascadelake --cpu-freq=High-High:Performance"
     slurm_partition: 4hours
     threads: 26
     cpus_per_task: 26
     mem_mb: 250000
   check_prevalidation:
     runtime: 30
-    slurm_extra: "--exclude=z[1024,1062] --cpu-freq=High-High:Performance"
+    slurm_extra: "--cpu-freq=High-High:Performance"
     slurm_partition: 30mins
     threads: 6
     cpus_per_task: 6
     mem_mb: 62500
   validate_sam_file:
-    runtime: 720
-    constraint: cascadelake
-    slurm_extra: "--exclude=z[1024,1062] --cpu-freq=High-High:Performance"
-    slurm_partition: 12hours
+    runtime: 240
+    slurm_extra: "--constraint=cascadelake --cpu-freq=High-High:Performance"
+    slurm_partition: 4hours
     threads: 13
     cpus_per_task: 13
     mem_mb: 125000
   collect_wgs_metrics:
     runtime: 240
-    constraint: cascadelake
-    slurm_extra: "--exclude=z[1024,1062] --cpu-freq=High-High:Performance"
+    slurm_extra: "--constraint=cascadelake --cpu-freq=High-High:Performance"
     slurm_partition: 4hours
     threads: 13
     cpus_per_task: 13
     mem_mb: 125000
   collect_raw_wgs_metrics:
     runtime: 240
-    constraint: cascadelake
-    slurm_extra: "--exclude=z[1024,1062] --cpu-freq=High-High:Performance"
+    slurm_extra: "--constraint=cascadelake --cpu-freq=High-High:Performance"
     slurm_partition: 4hours
     threads: 13
     cpus_per_task: 13
     mem_mb: 125000
   calibrate_dragen_str_model:
     runtime: 240
-    slurm_extra: "--exclude=z[1024,1062] --cpu-freq=High-High:Performance"
+    slurm_extra: "--constraint=cascadelake --cpu-freq=High-High:Performance"
     slurm_partition: 4hours
     threads: 26
     cpus_per_task: 26
     mem_mb: 250000
   scatter_interval_list:
     runtime: 30
-    constraint: cascadelake
-    slurm_extra: "--exclude=z[1024,1062] --cpu-freq=High-High:Performance"
+    slurm_extra: "--cpu-freq=High-High:Performance"
     slurm_partition: 30mins
     threads: 6
     cpus_per_task: 6
@@ -186,8 +166,7 @@ set-resources:
   haplotype_caller:
     haplotype_caller_jobs: 1
     runtime: 7200
-    constraint: cascadelake
-    slurm_extra: "--exclude=z[1024,1062] --cpu-freq=High-High:Performance"
+    slurm_extra: "--nodelist=z1064 --constraint=cascadelake --cpu-freq=High-High:Performance"
     slurm_partition: 5days
     threads: 26
     cpus_per_task: 26
@@ -195,15 +174,14 @@ set-resources:
   dragen_hardfilter_gvcf:
     dragen_hardfilter_gvcf_jobs: 1
     runtime: 720
-    slurm_extra: "--exclude=z[1024,1062] --cpu-freq=High-High:Performance"
+    slurm_extra: "--exclude=z1066 --constraint=cascadelake --cpu-freq=High-High:Performance"
     slurm_partition: 12hours
     threads: 13
     cpus_per_task: 13
     mem_mb: 125000
   merge_gvcfs:
     runtime: 240
-    constraint: cascadelake
-    slurm_extra: "--exclude=z[1024,1062] --cpu-freq=High-High:Performance"
+    slurm_extra: "--constraint=cascadelake --cpu-freq=High-High:Performance"
     slurm_partition: 4hours
     threads: 26
     cpus_per_task: 26
@@ -211,48 +189,65 @@ set-resources:
   sort_bamout:
     sort_bamout_jobs: 1
     runtime: 240
-    constraint: cascadelake
-    slurm_extra: "--exclude=z[1024,1062] --cpu-freq=High-High:Performance"
+    slurm_extra: "--constraint=cascadelake --cpu-freq=High-High:Performance"
     slurm_partition: 4hours
     threads: 13
     cpus_per_task: 13
     mem_mb: 125000
   merge_bamout:
     runtime: 240
-    slurm_extra: "--exclude=z[1024,1062] --cpu-freq=High-High:Performance"
+    slurm_extra: "--constraint=cascadelake --cpu-freq=High-High:Performance"
     slurm_partition: 4hours
     threads: 26
     cpus_per_task: 26
     mem_mb: 250000
   reblock:
-    runtime: 720
-    constraint: cascadelake
-    slurm_extra: "--exclude=z[1024,1062] --cpu-freq=High-High:Performance"
-    slurm_partition: 12hours
+    runtime: 240
+    slurm_extra: "--constraint=cascadelake --cpu-freq=High-High:Performance"
+    slurm_partition: 4hours
     threads: 13
     cpus_per_task: 13
     mem_mb: 125000
   validate_gvcf:
     runtime: 240
-    constraint: cascadelake
-    slurm_extra: "--exclude=z[1024,1062] --cpu-freq=High-High:Performance"
+    slurm_extra: "--constraint=cascadelake --cpu-freq=High-High:Performance"
     slurm_partition: 4hours
     threads: 6
     cpus_per_task: 6
     mem_mb: 62500
   collect_variant_calling_metrics:
     runtime: 240
-    constraint: cascadelake
-    slurm_extra: "--exclude=z[1024,1062] --cpu-freq=High-High:Performance"
+    slurm_extra: "--constraint=cascadelake --cpu-freq=High-High:Performance"
     slurm_partition: 4hours
     threads: 13
     cpus_per_task: 13
     mem_mb: 125000
+  sample_map:
+    runtime: 30
+    slurm_extra: "--cpu-freq=High-High:Performance"
+    slurm_partition: 30mins
+    threads: 2
+    cpus_per_task: 2
+    mem_mb: 3750
+  split_interval_list:
+    runtime: 30
+    slurm_extra: "--cpu-freq=High-High:Performance"
+    slurm_partition: 30mins
+    threads: 2
+    cpus_per_task: 2
+    mem_mb: 3750
+  import_gvcf:
+    runtime: 240
+    slurm_extra: "--cpu-freq=High-High:Performance"
+    slurm_partition: 4hours
+    threads: 6
+    cpus_per_task: 6
+    mem_mb: 25000 # This was apparently very carefully chosen. Don't change it carelessly/without testing first.
 
 resources:
-  haplotype_caller_jobs: 30
-  dragen_hardfilter_gvcf_jobs: 30
-  sort_bamout_jobs: 30
+  haplotype_caller_jobs: 45
+  dragen_hardfilter_gvcf_jobs: 45
+  sort_bamout_jobs: 45
 
 use-apptainer: True
 use-conda: True
@@ -260,8 +255,8 @@ apptainer-prefix: workflow/rules/envs
 conda-prefix: workflow/rules/envs
 apptainer-args: -B /zata,/data
 
-retries: 3
+# retries: 1
+# max-jobs-per-timespan: 1/2s
 rerun-incomplete: True
-keep-going: True
 printshellcmds: True
-# keep-incomplete: True
+keep-incomplete: True

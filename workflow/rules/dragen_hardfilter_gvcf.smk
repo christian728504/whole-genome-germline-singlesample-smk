@@ -4,7 +4,7 @@ rule dragen_hardfilter_gvcf:
     output:
         gvcf = f"{config.results_dir}/dragen_hardfilter_gvcf/{{sample}}/{{scatter}}.hardfiltered.g.vcf.gz",
     container: config.environments.gatk
-    log: f"{config.log_dir}/dragen_hardfilter_gvcf/{{sample}}.log"
+    log: f"{config.log_dir}/dragen_hardfilter_gvcf/{{sample}}_{{scatter}}.log"
     shell:
         """
         exec >> {log} 2>&1

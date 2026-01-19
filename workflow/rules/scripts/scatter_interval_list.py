@@ -24,7 +24,7 @@ def main(args):
     try:
         mem_mb = args.mem_mb
         scatter_count = args.scatter_count
-        break_bands_at_multiples_of = args.BREAK_BANDS_AT_MULTIPLES_OF
+        break_bands_at_multiples_of = args.break_bands_at_multiples_of
         interval_list = args.interval_list
         outdir = args.outdir
 

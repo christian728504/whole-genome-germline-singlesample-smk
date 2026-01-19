@@ -51,9 +51,8 @@ rule apply_bqsr:
     shell:
         """
         exec >> {log} 2>&1
-        gatk --java-options "-XX:+PrintFlagsFinal -XX:+PrintGCTimeStamps -XX:+PrintGCDateStamps \
-        -XX:+PrintGCDetails -Xloggc:gc_log.log \
-        -XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10 \
+        gatk --java-options "-XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10 -XX:+PrintFlagsFinal \
+        -Xlog:gc*:file={log}:time,uptime,level,tags \
         -Dsamjdk.compression_level={params.compression_level} \
         -Xms{resources.mem_mb}m -Xmx{resources.mem_mb}m" \
         ApplyBQSR \

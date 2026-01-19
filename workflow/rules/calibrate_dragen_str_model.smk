@@ -18,11 +18,11 @@ rule calibrate_dragen_str_model:
         """
         exec >> {log} 2>&1
         gatk --java-options \
-        "-xmx{resources.mem_mb}m -dgatk_stacktrace_on_user_exception=true -dsamjdk.reference_fasta={input.reference_fasta}" \
-        calibratedragstrmodel \
-            -r {input.reference_fasta} \
-            -i {input.bam} \
+        "-Xmx{resources.mem_mb}m -Dgatk_stacktrace_on_user_exception=true -Dsamjdk.reference_fasta={input.reference_fasta}" \
+        CalibrateDragstrModel \
+            -R {input.reference_fasta} \
+            -I {input.bam} \
             -str {input.str_table_file} \
-            -o {output.dragstr} \
+            -O {output.dragen_str_model} \
             --threads {resources.threads}
         """

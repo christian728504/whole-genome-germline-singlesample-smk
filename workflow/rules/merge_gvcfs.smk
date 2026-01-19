@@ -1,7 +1,7 @@
 def get_gvcfs(wildcards):
     return expand(
         f"{config.results_dir}/dragen_hardfilter_gvcf/{wildcards.sample}/{{scatter}}.hardfiltered.g.vcf.gz",
-        scatter=range(1, config.scatter_interval_list.scatter_count + 1)),
+        scatter=range(1, config.scatter_interval_list.scatter_count + 1),
     )
 
 def reformat_gvcfs(wildcards):
@@ -14,7 +14,7 @@ rule merge_gvcfs:
     input:
         gvcfs = get_gvcfs
     output:
-        gvcf = f"{config.results_dir}/merge_vcfs/{{sample}}.merged.g.vcf.gz"
+        gvcf = f"{config.results_dir}/merge_gvcfs/{{sample}}.merged.g.vcf.gz"
     params:
         gvcfs = reformat_gvcfs
     container: config.environments.default

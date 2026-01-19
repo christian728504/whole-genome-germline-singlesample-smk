@@ -2,8 +2,9 @@ rule scatter_interval_list:
     input:
         interval_list = config.input_files.calling_interval_list
     output:
+        outdir = directory(f"{config.results_dir}/scatter_interval_list"),
         scattered_intervals = expand(
-            f"{config.results_dir}/scatter_interval_list/temp_{{scatter:04d}}_of_{config.scatter_interval_list.scatter_count}/{{scatter}}scattered.interval_list ",
+            f"{config.results_dir}/scatter_interval_list/temp_{{scatter:04d}}_of_{config.scatter_interval_list.scatter_count}/{{scatter}}scattered.interval_list",
             scatter = list(range(1, config.scatter_interval_list.scatter_count + 1))
         )
     params:

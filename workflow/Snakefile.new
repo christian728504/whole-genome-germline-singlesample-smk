@@ -53,14 +53,63 @@ config.input_files.reference_fasta_index = str(fasta_index)
 config.input_files.reference_fasta_dict = str(fasta_dict)
 config.input_files.chromsizes = str(chromsizes)
 
-SEQUENCE_GROUPS_PATH = config.input_files.sequence_grouping
+### create sequencing grouping tsv for bsqr ###
+
+def create_sequencing_group_tsv(reference_fasta_dict, sequence_grouping, sequence_grouping_with_unmapped):
+    with open(reference_fasta_dict, "r") as ref_dict_file:
+        sequence_tuple_list = []
+        longest_sequence = 0
+        for line in ref_dict_file:
+            if line.startswith("@SQ"):
+                line_split = line.split("\t") # (Sequence_Name, Sequence_Length)
+                sequence_tuple_list.append((line_split[1].split("SN:")[1], int(line_split[2].split("LN:")[1])))
+        longest_sequence = sorted(sequence_tuple_list, key=lambda x: x[1], reverse=True)[0][1]
+
+    # We are adding this to the intervals because hg38 has contigs named with embedded colons and a bug in GATK strips off
+    # the last element after a :, so we add this as a sacrificial element.
+    hg38_protection_tag = ":1+"
+
+    # initialize the tsv string with the first sequence
+    tsv_string = sequence_tuple_list[0][0] + hg38_protection_tag
+    temp_size = sequence_tuple_list[0][1]
+    for sequence_tuple in sequence_tuple_list[1:]:
+        if temp_size + sequence_tuple[1] <= longest_sequence:
+            temp_size += sequence_tuple[1]
+            tsv_string += "\t" + sequence_tuple[0] + hg38_protection_tag
+        else:
+            tsv_string += "\n" + sequence_tuple[0] + hg38_protection_tag
+            temp_size = sequence_tuple[1]
+
+    # add the unmapped sequences as a separate line to ensure that they are recalibrated as well
+    with open(sequence_grouping, "w") as tsv_file:
+        tsv_file.write(tsv_string)
+        tsv_file.close()
+
+    tsv_string += '\n' + "unmapped"
+
+    with open(sequence_grouping_with_unmapped, "w") as tsv_file_with_unmapped:
+        tsv_file_with_unmapped.write(tsv_string)
+        tsv_file_with_unmapped.close()
+
+path = Path(f"{config.results_dir}/create_sequencing_group_tsv")
+path.mkdir(parents=True, exist_ok=True)
+sequence_grouping = path / "sequence_grouping.txt"
+sequence_grouping_with_unmapped = path / "sequence_grouping_with_unmapped.txt"
+
+create_sequencing_group_tsv(
+    config.input_files.reference_fasta_dict,
+    sequence_grouping,
+    sequence_grouping_with_unmapped
+)
+
+### add sequence groups to configfile ###
+
+SEQUENCE_GROUPS_PATH = sequence_grouping
 with open(SEQUENCE_GROUPS_PATH, "r") as tsv_file:
-    lines = tsv_file.readlines()
-    NUM_SEQUENCE_GROUPS = len(lines)
+    NUM_SEQUENCE_GROUPS = sum(1 for line in tsv_file)
 
 num_samples = metadata.height
-SPLIT_INTERVAL_SCATTER_COUNT = int(math.ceil(num_samples * config.split_interval_list.scatter_count_factor))
-# TODO: Is it 2.5 for the scatter count scale factor or 0.15?
+SPLIT_INTERVAL_SCATTER_COUNT = max(2, math.ceil(num_samples * config.split_interval_list.scatter_count_factor))
 
 #########################
 ### end of common.smk ###
@@ -172,5 +221,11 @@ rule all:
                 f"{config.results_dir}/collect_variant_calling_metrics/{{sample}}.variant_calling_summary_metrics",
             ],
             sample=SAMPLES
-        )
+        ),
+        f"{config.results_dir}/sample_map.smap",
+        expand(
+            f"{config.results_dir}/import_gvcf/{{split}}.continue",,
+            split=range(1, SPLIT_INTERVAL_SCATTER_COUNT + 1)
+        ),
+
          

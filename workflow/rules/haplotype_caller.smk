@@ -12,15 +12,21 @@ rule haplotype_caller:
     output:
         gvcf = f"{config.results_dir}/haplotype_caller/{{sample}}/{{scatter}}.g.vcf.gz",
         bam = f"{config.results_dir}/haplotype_caller/{{sample}}/{{scatter}}.bamout.bam",
+    params:
+        picard_tmp_dir = config.get("picard_tmp_dir", ".picard"),
+        compression_level = config.get("compression_level", 2),
     container: config.environments.gatk
     log: f"{config.log_dir}/haplotype_caller/{{sample}}/{{scatter}}.log"
     shell:
         """
         exec >> {log} 2>&1
-        
-        CONTAMINATION=$(awk 'NR==2 {print $7}' {input.contamination})
 
-        gatk --java-options "-Xmx{resources.mem_mb}m -Xms{resources.mem_mb}m -XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10" \
+        PICARD_TMP=$(mktemp -d -p {params.picard_tmp_dir} picard_tmp.XXXXXX)
+        trap "rm -rf $PICARD_TMP" EXIT
+        
+        CONTAMINATION=$(awk 'NR==2 {{print $7}}' {input.contamination})
+
+        gatk --java-options "-Dorg.xerial.snappy.tempdir=$PICARD_TMP -Djava.io.tmpdir=$PICARD_TMP -Dsamjdk.compression_level={params.compression_level} -Xmx{resources.mem_mb}m -Xms{resources.mem_mb}m -XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10" \
         HaplotypeCaller \
             -R {input.reference_fasta} \
             -I {input.bam} \

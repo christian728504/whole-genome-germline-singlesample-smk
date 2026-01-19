@@ -72,8 +72,8 @@ rule base_recalibration:
         BAM=$BQSR_TMP/$(basename {input.bam})
 
         gatk --java-options "-XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10 -XX:+PrintFlagsFinal \
-        -XX:+PrintGCTimeStamps -XX:+PrintGCDateStamps -XX:+PrintGCDetails \
-        -Xloggc:{log} -Xms{resources.mem_mb}m -Xmx{resources.mem_mb}m" \
+        -Xlog:gc*:file={log}:time,uptime,level,tags \
+        -Xms{resources.mem_mb}m -Xmx{resources.mem_mb}m" \
         BaseRecalibrator \
             -R $REFERNCE_FASTA\
             -I $BAM \
